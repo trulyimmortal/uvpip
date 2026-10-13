@@ -149,7 +149,7 @@ func candidatePathsFor(goos string, getenv func(string) string, home string) []s
 			paths = append(paths, filepath.Join(dir, "Programs", "uv", name))
 		}
 	} else {
-		paths = append(paths, "/usr/local/bin/uv", "/opt/homebrew/bin/uv", "/usr/bin/uv")
+		paths = append(paths, "/usr/local/bin/uv", "/opt/homebrew/bin/uv", "/run/current-system/sw/bin/uv", "/usr/bin/uv")
 	}
 	absPaths := paths[:0]
 	for _, path := range paths {
