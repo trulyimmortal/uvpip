@@ -212,6 +212,56 @@ records to stderr showing which uv was resolved and how, whether
 values and environment contents are never logged, so index credentials in
 URLs stay out of the output. With the variable unset, uv's stderr is untouched.
 
+#### Troubleshooting Debug Output
+
+Use the debug variable for one invocation so that normal command output stays
+unchanged. In POSIX shells:
+
+```sh
+UVPIP_DEBUG=1 uvpip install requests
+```
+
+In PowerShell:
+
+```powershell
+$env:UVPIP_DEBUG = '1'
+uvpip install requests
+Remove-Item Env:UVPIP_DEBUG
+```
+
+For a command forwarded to uv, read the records in this order:
+
+| Record | Meaning | Next check |
+| --- | --- | --- |
+| `msg="translated command"` | uvpip accepted the input and routed it to uv; `arg_count` is logged instead of argument values. | If this is missing, inspect the validation error printed by uvpip. |
+| `msg="resolved uv"` | The executable was found. `source=UVPIP_UV` means the absolute override was used; `source=search` means PATH or a known per-user/platform location was used. | Confirm that `path` points to the intended uv installation. |
+| `msg="prepared environment"` | `default_uv_system_python=true` means uvpip added `UV_SYSTEM_PYTHON=1`; `false` means an activated environment or an explicit setting was preserved. | Check `VIRTUAL_ENV`, `CONDA_PREFIX`, or `UV_SYSTEM_PYTHON` if uv selects the wrong interpreter. |
+| `msg="uv exited"` | uv started and returned the logged `code`; `duration` is the elapsed execution time. | Use uv's stderr for the package or resolver error. |
+
+If discovery fails, the record is `msg="uv discovery failed"` and the command
+also prints an install link. Check that `uv --version` works, or set
+`UVPIP_UV` to an existing absolute uv executable. A malformed, relative, or
+whitespace-padded override is rejected instead of falling back to another
+binary. If uv was found but could not be started, look for
+`msg="uv execution failed"` and verify that the file is executable and matches
+the current platform.
+
+`uvpip doctor` uses the same logger but prints its human-readable checks to
+stdout. It checks `uv`, `pip`, `pip3`, and `python` (falling back to
+`python3`). An `[OK]` line means the executable or shipped uvpip shim was
+recognized; `[!!]` identifies the target that needs attention. A failed version
+probe can mean that the executable was found but did not start or did not
+respond within the five-second probe timeout. The command exits with `1` when
+any check fails.
+
+The doctor checks PATH executables, not aliases or shell functions in the
+parent shell. If it reports a shim problem, inspect command precedence with
+`Get-Command pip -All` in PowerShell or `type -a pip` in a POSIX shell. If the
+interactive shell uses a function but PATH does not contain the shim, call
+`uvpip` explicitly or restart the shell after installation. When sharing debug
+output, redact local filesystem paths even though argument values and
+environment contents are intentionally omitted.
+
 ### Observability
 
 uvpip is a stateless, short-lived command-line wrapper rather than a long-running service or daemon. Consequently, continuous background health listeners, Prometheus metrics scrapers, and network observability endpoints do not exist. Instead, observability is tailored to the CLI execution lifecycle:
