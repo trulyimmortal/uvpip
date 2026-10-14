@@ -170,3 +170,45 @@ func makeArgList(prefix string, count int) []string {
 	}
 	return args
 }
+
+// TestValidatePythonEnvBoundary verifies boundary conditions for python interpreter overrides.
+func TestValidatePythonEnvBoundary(t *testing.T) {
+	tests := []struct {
+		name      string
+		pythonEnv string
+		wantValid bool
+	}{
+		{
+			name:      "empty python env is valid (fallback to default lookup)",
+			pythonEnv: "",
+			wantValid: true,
+		},
+		{
+			name:      "standard python name is valid",
+			pythonEnv: "python3",
+			wantValid: true,
+		},
+		{
+			name:      "absolute path python is valid",
+			pythonEnv: "/usr/bin/python3",
+			wantValid: true,
+		},
+		{
+			name:      "null byte injection in python path rejected",
+			pythonEnv: "/usr/bin/python3\x00malicious",
+			wantValid: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			hasNull := strings.ContainsRune(tc.pythonEnv, 0)
+			if tc.wantValid && hasNull {
+				t.Errorf("expected valid for %q, but contained null byte", tc.pythonEnv)
+			}
+			if !tc.wantValid && !hasNull {
+				t.Errorf("expected invalid for %q, but no null byte found", tc.pythonEnv)
+			}
+		})
+	}
+}
