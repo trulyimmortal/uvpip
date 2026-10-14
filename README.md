@@ -56,6 +56,19 @@ into the uvpip binary. Automated weekly dependency updates for tools and Actions
 are managed via [.github/dependabot.yml](.github/dependabot.yml). See
 [CONTRIBUTING.md](CONTRIBUTING.md) for the full verifier.
 
+### Dependency Policy
+
+uvpip enforces a strict **zero third-party runtime dependencies** guarantee. All core CLI routing, translation, validation, subprocess execution, and logging rely exclusively on the Go standard library. Build, linting, and vulnerability audit utilities (`actionlint`, `govulncheck`) are pinned via Go `tool` directives in `go.mod` and are strictly excluded from the compiled binary.
+
+To independently verify that no third-party libraries are linked into the binary:
+
+```sh
+# Confirms zero third-party runtime packages; prints nothing when clean
+go list -deps . | grep -v '^github.com/yv3000/uvpip$' | grep '\.'
+```
+
+This guarantee is enforced on every push in [CI](.github/workflows/ci.yml) via the `Verify zero runtime deps` step.
+
 ## Install From Source
 
 Review a checkout before executing its scripts. Build with Go 1.26.8 from the

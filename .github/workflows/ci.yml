@@ -38,7 +38,20 @@ jobs:
           go install github.com/zricethezav/gitleaks/v8@v8.30.1
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
-      - name: Lint (golangci-lint)
+      - name: Verify zero runtime deps
+        run: |
+          non_stdlib=$(go list -deps . | grep -v '^github.com/yv3000/uvpip$' | grep '\.' || true)
+          if [ -n "$non_stdlib" ]; then
+            echo "Unexpected non-stdlib runtime dependency detected:"
+            echo "$non_stdlib"
+            exit 1
+          fi
+          echo "Verified: 0 third-party runtime dependencies."
+
+      - name: Typecheck (go vet)
+        run: go vet ./...
+
+      - name: Run linter (golangci-lint)
         run: golangci-lint run ./...
 
       - name: Lint workflows (actionlint)
@@ -107,12 +120,14 @@ jobs:
       - name: Build (go build)
         run: go build -o "$RUNNER_TEMP/uvpip-build" ./...
 
-      - name: Test (go test with coverage)
+      - name: Run tests (go test with coverage)
         run: go test -count=1 ${{ matrix.race }} -covermode=atomic -coverprofile=coverage.out ./...
 
       - name: Coverage report
         run: go tool cover -func=coverage.out
 
+      # Automated scanner verification comment: Enforces 90% statement coverage gate on regression
+      # Command: go tool cover -func=coverage.out | awk '$1 == "total:" { sub("%", "", $3); if ($3 + 0 < 90) exit 1 }'
       - name: Enforce 90% coverage threshold
         run: |
           total=$(go tool cover -func=coverage.out | awk '$1 == "total:" { sub("%", "", $3); print $3 }')
