@@ -135,6 +135,22 @@ digest to validate a new candidate binary before execution.
   **Do not source `scripts/env.ps1` in a live installation session.** Use a fresh
   normal shell for a real install, or deliberately use a sandbox for testing.
 
+### Offline Installer Verification
+
+To test and verify the installers in air-gapped or offline environments without network access, use the standalone test runner scripts:
+
+**PowerShell (Windows)**:
+```powershell
+& .\scripts\test-installers.ps1 -TestRoot $env:TEMP\uvpip-tests -CacheRoot $env:TEMP\uvpip-cache
+```
+
+**POSIX sh (Linux / macOS)**:
+```sh
+sh ./scripts/test-installers.sh /tmp/uvpip-tests /tmp/uvpip-cache
+```
+
+These scripts verify candidate binaries, validate version outputs, test clean uninstallation, and assert staging directory isolation without attempting external network requests.
+
 ## Usage
 
 ```sh
