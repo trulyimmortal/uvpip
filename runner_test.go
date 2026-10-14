@@ -275,13 +275,15 @@ func TestUvCandidatePaths(t *testing.T) {
 			t.Fatalf("expected at least 2 home candidate paths, got %v", posixPaths)
 		}
 		if runtime.GOOS != "windows" {
-			foundUsrLocal, foundNixOS := false, false
+			foundUsrLocal, foundNixOS, foundLinuxbrew := false, false, false
 			for _, p := range posixPaths {
 				switch p {
 				case "/usr/local/bin/uv":
 					foundUsrLocal = true
 				case "/run/current-system/sw/bin/uv":
 					foundNixOS = true
+				case "/home/linuxbrew/.linuxbrew/bin/uv":
+					foundLinuxbrew = true
 				}
 			}
 			if !foundUsrLocal {
@@ -289,6 +291,9 @@ func TestUvCandidatePaths(t *testing.T) {
 			}
 			if !foundNixOS {
 				t.Fatalf("missing NixOS system profile path in posix paths: %v", posixPaths)
+			}
+			if !foundLinuxbrew {
+				t.Fatalf("missing Linuxbrew path in posix paths: %v", posixPaths)
 			}
 		}
 	})
