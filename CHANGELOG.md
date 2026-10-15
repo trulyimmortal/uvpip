@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.0.2 - 2026-10-15
+
+Feature and reliability release introducing CLI flag conflict validation, structured diagnostics, fallback candidate path expansions, 97%+ test coverage with artifacts, and Windows architecture isolation.
+
+- Add `validateTranslationFlags` rejecting conflicting `-q`/`--quiet` and `-v`/`--verbose` options with exit status 2 (`errUsage`), respecting the `--` separator for subsequent literal operands (`translator.go`, `translator_test.go`).
+- Document explicit CLI input validation boundaries, flag conflict contract, and exit codes in `README.md`.
+- Add structured slog logging to `runDoctor` with debug trace observability for passing diagnostics and info-level error reporting (`doctor.go`, `doctor_test.go`).
+- Add fallback uv candidate discovery paths for Linuxbrew (`/home/linuxbrew/.linuxbrew/bin/uv`) and NixOS (`/run/current-system/sw/bin/uv`) with unit assertions (`runner.go`, `runner_test.go`).
+- Add dedicated table-driven test suite `errors_test.go` verifying sentinel errors, achieving 100% test file pairing for all source files.
+- Expose global `COVERAGE_THRESHOLD: 90` in `.github/workflows/ci.yml` and pin coverage artifact uploads via `actions/upload-artifact@v7.0.2` with 14-day retention.
+- Add isolated Windows architecture download cases (AMD64, ARM64, WoW64) in `scripts/test-installers.ps1`.
+- Add pip cache isolation semantics, PowerShell 5.1 and 7+ setup instructions, and expanded external contributor review workflows (`README.md`, `CONTRIBUTING.md`).
+
 ## v1.0.1 - 2026-10-12
 
 Maintenance release introducing CLI input boundary schema defenses, multi-platform candidate path testing, automated GitHub Releases, and threat model documentation.
