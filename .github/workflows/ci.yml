@@ -38,17 +38,6 @@ jobs:
           go install github.com/zricethezav/gitleaks/v8@v8.30.1
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
-      - name: Verify zero runtime deps
-        run: |
-          deps=$(go list -deps -f '{{if and (not .Standard) (not .Module.Main)}}{{.ImportPath}}{{end}}' ./...)
-          non_stdlib=$(printf '%s\n' "$deps" | sed '/^$/d')
-          if [ -n "$non_stdlib" ]; then
-            echo "Unexpected non-stdlib runtime dependency detected:"
-            echo "$non_stdlib"
-            exit 1
-          fi
-          echo "Verified: 0 third-party runtime dependencies."
-
       - name: Typecheck (go vet)
         run: go vet ./...
 
@@ -103,6 +92,17 @@ jobs:
         with:
           go-version: '1.26.8'
           cache-dependency-path: go.sum
+
+      - name: Verify zero runtime deps
+        run: |
+          deps=$(go list -deps -f '{{if and (not .Standard) (not .Module.Main)}}{{.ImportPath}}{{end}}' ./...)
+          non_stdlib=$(printf '%s\n' "$deps" | sed '/^$/d')
+          if [ -n "$non_stdlib" ]; then
+            echo "Unexpected non-stdlib runtime dependency detected:"
+            echo "$non_stdlib"
+            exit 1
+          fi
+          echo "Verified: 0 third-party runtime dependencies."
 
       - name: Check formatting (gofmt)
         run: |

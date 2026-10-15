@@ -64,10 +64,10 @@ To independently verify that no third-party libraries are linked into the binary
 
 ```sh
 # Confirms zero third-party runtime packages; prints nothing when clean
-go list -deps . | grep -v '^github.com/yv3000/uvpip$' | grep '\.'
+go list -deps -f '{{if and (not .Standard) (not .Module.Main)}}{{.ImportPath}}{{end}}' ./...
 ```
 
-This guarantee is enforced on every push in [CI](.github/workflows/ci.yml) via the `Verify zero runtime deps` step.
+This guarantee is enforced on every push in [CI](.github/workflows/ci.yml) via the `Verify zero runtime deps` step on all three operating systems. A failed dependency listing fails the check. Each test job also retains its coverage profile as a downloadable artifact for 14 days, including when the coverage gate fails.
 
 ## Install From Source
 
