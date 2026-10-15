@@ -40,7 +40,8 @@ jobs:
 
       - name: Verify zero runtime deps
         run: |
-          non_stdlib=$(go list -deps . | grep -v '^github.com/yv3000/uvpip$' | grep '\.' || true)
+          deps=$(go list -deps -f '{{if and (not .Standard) (not .Module.Main)}}{{.ImportPath}}{{end}}' ./...)
+          non_stdlib=$(printf '%s\n' "$deps" | sed '/^$/d')
           if [ -n "$non_stdlib" ]; then
             echo "Unexpected non-stdlib runtime dependency detected:"
             echo "$non_stdlib"
@@ -125,6 +126,15 @@ jobs:
 
       - name: Coverage report
         run: go tool cover -func=coverage.out
+
+      - name: Upload coverage profile
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: coverage-${{ matrix.os }}
+          path: coverage.out
+          if-no-files-found: error
+          retention-days: 14
 
       # Automated scanner verification comment: Enforces 90% statement coverage gate on regression
       # Command: go tool cover -func=coverage.out | awk '$1 == "total:" { sub("%", "", $3); if ($3 + 0 < 90) exit 1 }'

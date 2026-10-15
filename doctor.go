@@ -34,7 +34,10 @@ func runDoctor(out io.Writer, log *slog.Logger) int {
 			} else {
 				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 				// path comes from findUV/exec.LookPath; probing its version is the check itself.
-				output, runErr := exec.CommandContext(ctx, path, "--version").Output() //nolint:gosec // G204: intentional probe of a resolved executable.
+				cmd := exec.CommandContext(ctx, path, "--version") //nolint:gosec // G204: intentional probe of a resolved executable.
+				// Descendants can inherit output pipes after the probed process exits.
+				cmd.WaitDelay = time.Second
+				output, runErr := cmd.Output()
 				cancel()
 				err = runErr
 				if err == nil {

@@ -212,10 +212,10 @@ Only point the override and PATH at trusted executables.
 
 To defend against injection and malformed argument overflows, `ValidateInputs` enforces explicit schema limits before translating or launching child processes:
 - **Argument count limit**: Maximum of **512** arguments per invocation. Larger argument arrays are rejected with exit code **2** (`ErrInvalidArgs`).
-- **Argument length limit**: Maximum of **4,096** characters per individual argument. Oversized arguments are rejected with exit code **2** (`ErrInvalidArgs`).
+- **Argument length limit**: Maximum of **4,096 bytes** per individual argument, including `--python` selectors. Oversized arguments are rejected with exit code **2** (`ErrInvalidArgs`). Interpreter selection is delegated to uv.
 - **Null-byte defense**: Any argument containing an embedded null byte (`\x00`) is rejected immediately with exit code **2** to prevent C-string termination attacks.
-- **Path override constraints**: `UVPIP_UV` must be a clean, unpadded, absolute path; relative paths or whitespace-padded values are rejected with exit code **2** (`ErrInvalidOverride`).
-Argument and override contents are never echoed back in stderr records, preventing credential leakage from embedded index tokens.
+- **Path override constraints**: `UVPIP_UV` must be a clean, unpadded, absolute path; relative paths or whitespace-padded values fail discovery with exit code **127** (`ErrInvalidOverride`).
+Argument contents are never echoed by uvpip's diagnostics. Executable paths can appear in discovery and launch errors; redact local paths before sharing logs.
 
 Shell functions can keep intercepting `pip` after virtual environment activation
 when the profile was loaded. Noninteractive processes, aliases, other profiles,

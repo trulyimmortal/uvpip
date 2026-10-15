@@ -5,8 +5,10 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestIsUvpipShim(t *testing.T) {
@@ -98,5 +100,60 @@ func TestDoctorStructuredLogging(t *testing.T) {
 	got := stderr.String()
 	if !strings.Contains(got, `msg="doctor check failed"`) || !strings.Contains(got, "target=uv") {
 		t.Fatalf("expected structured log for doctor failure in stderr, got: %q", got)
+	}
+}
+
+func TestDoctorInheritedOutputPipes(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("POSIX shell fixture; normal doctor probes are tested on every OS")
+	}
+	for _, tt := range []struct {
+		name     string
+		spawn    string
+		wantCode int
+	}{
+		{"closed pipes", "", 0},
+		{"inherited pipes", "/bin/sleep 3 &\necho $! >> \"$UVPIP_DOCTOR_CHILD_PID\"\n", 1},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := t.TempDir()
+			pidFile := filepath.Join(dir, "children")
+			t.Setenv("UVPIP_DOCTOR_CHILD_PID", pidFile)
+			t.Cleanup(func() {
+				data, _ := os.ReadFile(pidFile)
+				for _, field := range strings.Fields(string(data)) {
+					pid, err := strconv.Atoi(field)
+					if err != nil {
+						t.Error(err)
+						continue
+					}
+					if child, err := os.FindProcess(pid); err == nil {
+						_ = child.Kill() // The bounded fixture may already have exited.
+					}
+				}
+			})
+			for _, name := range []string{"uv", "python", "pip", "pip3"} {
+				content := "#!/bin/sh\n" + tt.spawn + "printf 'offline fixture\\n'\n"
+				if name == "pip" || name == "pip3" {
+					content = "#!/bin/sh\nexec \"$(dirname \"$0\")/uvpip\" \"$@\"\n"
+				}
+				if err := os.WriteFile(filepath.Join(dir, name), []byte(content), 0700); err != nil {
+					t.Fatal(err)
+				}
+			}
+			t.Setenv("UVPIP_UV", filepath.Join(dir, "uv"))
+			t.Setenv("PATH", dir)
+			var out bytes.Buffer
+			started := time.Now()
+			if code := runDoctor(&out, quiet); code != tt.wantCode {
+				t.Fatalf("exit %d, want %d: %s", code, tt.wantCode, &out)
+			}
+			if elapsed := time.Since(started); elapsed >= 5*time.Second {
+				t.Fatalf("inherited pipes delayed doctor for %s", elapsed)
+			}
+			if tt.wantCode != 0 && strings.Count(out.String(), "[!!]") != 2 {
+				t.Fatalf("expected both version probes to reject inherited pipes: %s", &out)
+			}
+		})
 	}
 }

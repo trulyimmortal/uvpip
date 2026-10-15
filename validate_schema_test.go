@@ -171,43 +171,25 @@ func makeArgList(prefix string, count int) []string {
 	return args
 }
 
-// TestValidatePythonEnvBoundary verifies boundary conditions for python interpreter overrides.
-func TestValidatePythonEnvBoundary(t *testing.T) {
-	tests := []struct {
-		name      string
-		pythonEnv string
-		wantValid bool
+// Python selectors are forwarded to uv after the normal argument boundary checks.
+func TestValidatePythonArgumentBoundary(t *testing.T) {
+	for _, tt := range []struct {
+		name, selector string
+		wantErr        bool
 	}{
-		{
-			name:      "empty python env is valid (fallback to default lookup)",
-			pythonEnv: "",
-			wantValid: true,
-		},
-		{
-			name:      "standard python name is valid",
-			pythonEnv: "python3",
-			wantValid: true,
-		},
-		{
-			name:      "absolute path python is valid",
-			pythonEnv: "/usr/bin/python3",
-			wantValid: true,
-		},
-		{
-			name:      "null byte injection in python path rejected",
-			pythonEnv: "/usr/bin/python3\x00malicious",
-			wantValid: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			hasNull := strings.ContainsRune(tc.pythonEnv, 0)
-			if tc.wantValid && hasNull {
-				t.Errorf("expected valid for %q, but contained null byte", tc.pythonEnv)
-			}
-			if !tc.wantValid && !hasNull {
-				t.Errorf("expected invalid for %q, but no null byte found", tc.pythonEnv)
+		{"empty selector forwarded", "", false},
+		{"interpreter name", "python3", false},
+		{"absolute interpreter path", "/usr/bin/python3", false},
+		{"path with spaces", "/tools/my python", false},
+		{"null byte rejected", "/usr/bin/python3\x00malicious", true},
+		{"byte limit accepted", strings.Repeat("a", maxArgLen), false},
+		{"byte limit exceeded", strings.Repeat("a", maxArgLen+1), true},
+		{"multibyte limit exceeded", strings.Repeat("é", maxArgLen/2+1), true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateInputs(CLIInputs{Args: []string{"install", "--python", tt.selector, "pkg"}})
+			if (err != nil) != tt.wantErr || (err != nil && !errors.Is(err, ErrInvalidArgs)) {
+				t.Fatalf("validation error = %v, want rejection %v", err, tt.wantErr)
 			}
 		})
 	}
