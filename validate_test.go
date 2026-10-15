@@ -16,6 +16,8 @@ func TestValidateArgs(t *testing.T) {
 		ok   bool
 	}{
 		{"command", []string{"install", "requests"}, true},
+		{"verbosity conflict", []string{"install", "-q", "--verbose"}, false},
+		{"literal verbosity operand", []string{"install", "-q", "--", "--verbose"}, true},
 		{"empty value after command", []string{"install", ""}, true},
 		{"no args", nil, false},
 		{"empty command", []string{""}, false},

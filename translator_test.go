@@ -1,9 +1,61 @@
 package main
 
 import (
+	"bytes"
+	"errors"
+	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 )
+
+func TestValidateTranslationFlags(t *testing.T) {
+	for _, tt := range []struct {
+		name    string
+		args    []string
+		wantErr bool
+	}{
+		{"empty", nil, false},
+		{"short conflict", []string{"install", "-q", "-v"}, true},
+		{"long conflict", []string{"install", "--quiet", "--verbose"}, true},
+		{"mixed conflict", []string{"-q", "install", "--verbose"}, true},
+		{"reverse mixed conflict", []string{"--verbose", "install", "-q"}, true},
+		{"other mixed conflict", []string{"install", "--quiet", "-v"}, true},
+		{"quiet only", []string{"install", "-q", "--quiet", "pkg"}, false},
+		{"verbose only", []string{"install", "-v", "--verbose", "pkg"}, false},
+		{"literal operands", []string{"install", "--", "-q", "-v"}, false},
+		{"literal verbose", []string{"install", "-q", "--", "--verbose"}, false},
+		{"conflict before separator", []string{"install", "-q", "-v", "--"}, true},
+		{"option values and URL", []string{"install", "--index-url", "https://example.org/-q/-v", "--config-settings=--quiet", "pkg"}, false},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateTranslationFlags(tt.args)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("error = %v, want rejection %v", err, tt.wantErr)
+			}
+			if err != nil && (!errors.Is(err, errUsage) || !errors.Is(err, ErrInvalidArgs)) {
+				t.Fatalf("lost typed usage error: %v", err)
+			}
+		})
+	}
+}
+
+func TestCLIRejectsTranslationFlagConflicts(t *testing.T) {
+	// A missing uv proves validation happens before executable discovery.
+	t.Setenv("UVPIP_UV", filepath.Join(t.TempDir(), "missing"))
+	for _, flags := range [][]string{{"-q", "-v"}, {"--quiet", "--verbose"}, {"-v", "--quiet"}} {
+		t.Run(strings.Join(flags, " "), func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			args := append([]string{"install", "private-package-value"}, flags...)
+			if code := runCLI(args, nil, &stdout, &stderr); code != 2 {
+				t.Fatalf("exit = %d, want 2: %s", code, &stderr)
+			}
+			if stdout.Len() != 0 || !strings.Contains(stderr.String(), "cannot be combined") || strings.Contains(stderr.String(), "private-package-value") {
+				t.Fatalf("unexpected output: stdout=%q stderr=%q", &stdout, &stderr)
+			}
+		})
+	}
+}
 
 func TestTranslateToUV(t *testing.T) {
 	tests := []struct {

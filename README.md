@@ -208,12 +208,12 @@ blank values and values with leading or trailing whitespace (usually a quoting
 mistake) are reported as such.
 Only point the override and PATH at trusted executables.
 
-### Input Validation Boundaries
+### Input Validation
 
-To defend against injection and malformed argument overflows, `ValidateInputs` enforces explicit schema limits before translating or launching child processes:
-- **Argument count limit**: Maximum of **512** arguments per invocation. Larger argument arrays are rejected with exit code **2** (`ErrInvalidArgs`).
-- **Argument length limit**: Maximum of **4,096 bytes** per individual argument, including `--python` selectors. Oversized arguments are rejected with exit code **2** (`ErrInvalidArgs`). Interpreter selection is delegated to uv.
-- **Null-byte defense**: Any argument containing an embedded null byte (`\x00`) is rejected immediately with exit code **2** to prevent C-string termination attacks.
+Before translating or launching pip commands, `ValidateInputs` enforces these boundaries:
+
+- **Locally rejected (exit status 2)**: Blank commands, more than 512 arguments, arguments longer than 4,096 bytes, embedded null bytes, and conflicting `--quiet` (`-q`) and `--verbose` (`-v`) flags. Verbosity checking stops at `--`; subsequent arguments are literal operands. With no arguments, uvpip still prints help and exits successfully.
+- **Forwarded to uv**: Package names, valid options, standard pip flags, and index URLs within these boundaries. uv determines their meaning, selects the interpreter for `--python`, and may reject unsupported options.
 - **Path override constraints**: `UVPIP_UV` must be a clean, unpadded, absolute path; relative paths or whitespace-padded values fail discovery with exit code **127** (`ErrInvalidOverride`).
 Argument contents are never echoed by uvpip's diagnostics. Executable paths can appear in discovery and launch errors; redact local paths before sharing logs.
 

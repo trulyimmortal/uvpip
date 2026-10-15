@@ -1,6 +1,28 @@
 package main
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
+
+// validateTranslationFlags rejects conflicting verbosity flags before routing to uv.
+func validateTranslationFlags(args []string) error {
+	quiet, verbose := false, false
+	for _, arg := range args {
+		switch arg {
+		case "--":
+			return nil // Remaining arguments are literal operands.
+		case "-q", "--quiet":
+			quiet = true
+		case "-v", "--verbose":
+			verbose = true
+		}
+		if quiet && verbose {
+			return fmt.Errorf("%w: --quiet and --verbose cannot be combined", errUsage)
+		}
+	}
+	return nil
+}
 
 // translateToUV converts pip CLI args into the equivalent uv CLI args.
 // uv pip subcommand is designed to be pip-compatible so most flags pass through 1:1.

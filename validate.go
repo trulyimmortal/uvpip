@@ -62,7 +62,10 @@ func validateArgs(args []string) error {
 	if len(args) == 0 || strings.TrimSpace(args[0]) == "" {
 		return fmt.Errorf("%w: pip command is empty", errUsage)
 	}
-	return validateArgBounds(args)
+	if err := validateArgBounds(args); err != nil {
+		return err
+	}
+	return validateTranslationFlags(args)
 }
 
 // validateUVOverride checks a non-empty UVPIP_UV before path lookup, so common
