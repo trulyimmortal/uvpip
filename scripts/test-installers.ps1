@@ -13,6 +13,11 @@ foreach ($name in 'TEMP', 'TMP', 'TMPDIR', 'HOME', 'USERPROFILE', 'APPDATA', 'LO
     $savedEnv[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
     if ($name -ne 'PATH') { [Environment]::SetEnvironmentVariable($name, $CacheRoot, 'Process') }
 }
+foreach ($name in 'PROCESSOR_ARCHITECTURE', 'PROCESSOR_ARCHITEW6432') {
+    $savedEnv[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
+}
+$env:PROCESSOR_ARCHITECTURE = 'AMD64'
+$env:PROCESSOR_ARCHITEW6432 = ''
 $work = Join-Path $TestRoot ('uvpip-powershell-' + [guid]::NewGuid().ToString('N'))
 $cache = Join-Path $CacheRoot ('uvpip-powershell-' + [guid]::NewGuid().ToString('N'))
 [IO.Directory]::CreateDirectory($work) | Out-Null
@@ -150,11 +155,18 @@ public static class InstallerFixture {
     Assert-NoStage
     function Invoke-WebRequest {
         param($Uri, $OutFile, [switch]$UseBasicParsing)
+        Assert ($Uri -eq "https://github.com/yv3000/uvpip/releases/latest/download/uvpip-windows-$expectedArch.exe") 'wrong architecture asset'
         Copy-Item -LiteralPath $fixture -Destination $OutFile
     }
     $hash = (Get-FileHash -LiteralPath $fixture -Algorithm SHA256).Hash
-    & $installer -BinaryPath '' -SHA256 $hash -NoProfile -NoPath 6>$null
-    & $uninstaller -NoProfile -NoPath 6>$null
+    foreach ($case in @(@('AMD64', '', 'amd64'), @('ARM64', '', 'arm64'), @('x86', 'AMD64', 'amd64'), @('AMD64', 'ARM64', 'arm64'))) {
+        $env:PROCESSOR_ARCHITECTURE, $env:PROCESSOR_ARCHITEW6432, $expectedArch = $case
+        & $installer -BinaryPath '' -SHA256 $hash -NoProfile -NoPath 6>$null
+        & $uninstaller -NoProfile -NoPath 6>$null
+    }
+    $env:PROCESSOR_ARCHITECTURE = 'x86'
+    $env:PROCESSOR_ARCHITEW6432 = ''
+    Expect-Failure { & $installer -BinaryPath '' -NoProfile -NoPath } 'Unsupported architecture'
     Assert ((Bytes $PROFILE) -eq $before) 'NoProfile changed profile'
     Assert-NoStage
     Assert ([Environment]::GetEnvironmentVariable('PATH', 'User') -ceq $userPathBefore) 'User PATH changed'
