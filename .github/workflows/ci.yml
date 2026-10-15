@@ -17,6 +17,7 @@ concurrency:
 env:
   GOTOOLCHAIN: local
   GOFLAGS: -mod=readonly
+  COVERAGE_THRESHOLD: 90
 
 jobs:
   lint:
@@ -139,13 +140,15 @@ jobs:
       # Automated scanner verification comment: Enforces 90% statement coverage gate on regression
       # Command: go tool cover -func=coverage.out | awk '$1 == "total:" { sub("%", "", $3); if ($3 + 0 < 90) exit 1 }'
       - name: Enforce 90% coverage threshold
+        env:
+          COVERAGE_THRESHOLD: 90
         run: |
           total=$(go tool cover -func=coverage.out | awk '$1 == "total:" { sub("%", "", $3); print $3 }')
-          echo "Total statement coverage: ${total}%"
+          echo "Total statement coverage: ${total}% (Threshold: ${COVERAGE_THRESHOLD}%)"
           if [ -n "$GITHUB_STEP_SUMMARY" ]; then
             printf '### Coverage Summary\n- Total Statement Coverage: **%s%%**\n' "$total" >> "$GITHUB_STEP_SUMMARY"
           fi
-          awk -v total="$total" 'BEGIN { if (total == "" || total + 0 < 90) { print "Coverage below 90%"; exit 1 } }'
+          awk -v total="$total" -v min="$COVERAGE_THRESHOLD" 'BEGIN { if (total == "" || total + 0 < min) { print "Coverage below threshold"; exit 1 } }'
 
       - name: Go vulnerability audit (govulncheck)
         run: go tool govulncheck ./...
