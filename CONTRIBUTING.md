@@ -335,9 +335,18 @@ tests do not prove live downloads, every shell's startup rules, all architecture
 or every uv/package combination. Coverage is only one gate, not a compatibility
 or security guarantee.
 
-## Manual Release
+## Release Workflow and Maintainer Checklist
 
-There is intentionally no automatic publishing workflow.
+[Release](.github/workflows/release.yml) publishes on a pushed `v*` tag or
+`workflow_dispatch`. It uses Go 1.26.8 and `CGO_ENABLED=0` to build Windows,
+Linux, and macOS binaries for amd64 and arm64, creates `SHA256SUMS.txt`, and
+uploads all six binaries and the manifest with generated release notes.
+Publication uses the workflow's `GITHUB_TOKEN` with `contents: write`.
+
+The release job does **not** run or wait for the full CI checks. Maintainers
+must complete the checks below before triggering publication. Manual dispatch
+uses the selected ref's name as the release tag; select the intended version
+tag, not a development branch. Do not redispatch an already-published release.
 
 1. Review the exact source commit, version constant, changelog, security changes,
    and dependency/tool pins. Never relabel old binaries as the revised source.
@@ -353,9 +362,11 @@ There is intentionally no automatic publishing workflow.
 4. Compute SHA-256 for each final asset (`Get-FileHash -Algorithm SHA256` on
    Windows, `sha256sum` or `shasum -a 256` on POSIX). Independently review the
    source-to-asset mapping, checksums, and release notes before publication.
-5. A maintainer manually publishes a new tag/release with the six reviewed assets
-   and a checksum manifest. Do not replace historical v1.0.0 assets. Document any
-   actual signing separately; a checksum alone is not a signature.
+5. After verification, push the reviewed version tag to trigger the Release
+   workflow, or dispatch it against the intended tag. The workflow builds and
+   publishes its own assets; the local builds above are verification artifacts.
+   Inspect the workflow result and generated release notes. Do not replace
+   historical v1.0.0 assets. A checksum alone is not a signature.
 6. Download the published assets into a disposable environment, verify against
    the reviewed manifest, and smoke-test installation. Only then remove or update
-   the README's unreleased-source warning. No release is created by verification.
+   any release-status documentation. Local verification does not publish a release.

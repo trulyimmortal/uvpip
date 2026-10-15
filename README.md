@@ -335,8 +335,10 @@ them manually and retry. Windows accepts `-NoProfile`/`-NoPath`; POSIX accepts
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the request flow and the role of
 each file, and [CONTRIBUTING.md](CONTRIBUTING.md) for required fresh-clone verification,
-formatting/tests, pinned tools, the coverage gate, and the manual release checklist.
-CI does not publish binaries or use release secrets.
+formatting/tests, pinned tools, the coverage gate, and the release workflow checklist.
+The CI workflow does not publish binaries. The separate [Release workflow](.github/workflows/release.yml)
+publishes on version-tag pushes or manual dispatch; maintainers must verify the
+source and green native CI before triggering it.
 
 See [SECURITY.md](SECURITY.md) for the trust model and reporting guidance, and
 [CHANGELOG.md](CHANGELOG.md) for released versus unreleased changes.
