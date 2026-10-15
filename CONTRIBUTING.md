@@ -110,8 +110,10 @@ then points to `uvpip-quality\home\AppData\Local` beneath the manager root, not
 your normal Windows profile.
 
 The verifier calls `env.ps1` itself, checks every native exit code, and retains
-the build and coverage report in a unique directory under the managed TEMP. It
-prints that path for inspection. It does not overwrite the checkout's preexisting
+the build and coverage report in a unique directory under `TestRoot`. It
+prints that path for inspection. Build/test temporary files and disposable installer
+homes also stay under `TestRoot`; Go modules, build caches, and installed tools
+remain under `CacheRoot`. It does not overwrite the checkout's preexisting
 ignored `uvpip.exe`. The installer suite runs in a child **powershell.exe**, not
 `pwsh`: its `Add-Type -OutputType ConsoleApplication` fixture needs PowerShell 5.1.
 
