@@ -11,6 +11,8 @@ if (-not (Test-Path -LiteralPath $TestRoot -PathType Container) -or -not (Test-P
 $TestRoot = (Resolve-Path -LiteralPath $TestRoot).Path
 $CacheRoot = (Resolve-Path -LiteralPath $CacheRoot).Path
 . (Join-Path $PSScriptRoot 'env.ps1') -CacheRoot $CacheRoot
+# Build/test scratch belongs to TestRoot; package and tool caches remain in CacheRoot.
+$env:TEMP = $env:TMP = $env:TMPDIR = $env:GOTMPDIR = $TestRoot
 $env:GOTOOLCHAIN = 'local'
 $env:GOFLAGS = '-mod=readonly'
 $env:PATH = "$env:GOBIN;$env:PATH"
@@ -59,7 +61,7 @@ try {
     & powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File scripts/check-powershell.ps1
     if ($LASTEXITCODE -ne 0) { throw 'PowerShell syntax validation failed' }
     # The fixture compiler uses ConsoleApplication, which requires Windows PowerShell 5.1.
-    & powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File scripts/test-installers.ps1 -TestRoot $TestRoot -CacheRoot $CacheRoot
+    & powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File scripts/test-installers.ps1 -TestRoot $TestRoot -CacheRoot $TestRoot
     if ($LASTEXITCODE -ne 0) { throw 'Offline Windows installer tests failed' }
     Write-Host 'PASS: Windows verification (90% minimum statement coverage)'
 } finally {
