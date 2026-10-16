@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.0.3 - 2026-10-17
+
+Architecture and resilience release introducing exported sentinel error taxonomy, bundled short flag validation, dedicated Windows integration test suites, automated CI supply chain freshness audits, and community review SLAs.
+
+- Export typed sentinel error taxonomy (`ErrUsage` wrapping `ErrInvalidArgs`, `ErrCannotExecute`) in `errors.go` with table-driven assertions in `errors_test.go`.
+- Add bundled short flag conflict detection (`-qv`, `-vq`) and multi-level verbosity/quiet bounds validation (`-vvv`, `-qqq`) in `translator.go` and `translator_test.go`.
+- Add dedicated Windows integration test suite `windows_test.go` (`//go:build windows`) verifying shim self-detection, candidate resolution for `%LOCALAPPDATA%`/`%USERPROFILE%`, and case-insensitive environment handling.
+- Add automated CI supply-chain dependency freshness check (`go list -m -u all`) in `.github/workflows/ci.yml`.
+- Formalize pull request review SLAs (48-hour triage, 72-hour decision) in `CONTRIBUTING.md`.
+- Document technical architecture, lifecycle management, and error taxonomy contracts in `ARCHITECTURE.md`.
+
 ## v1.0.2 - 2026-10-15
 
 Feature and reliability release introducing CLI flag conflict validation, structured diagnostics, fallback candidate path expansions, 97%+ test coverage with artifacts, and Windows architecture isolation.
