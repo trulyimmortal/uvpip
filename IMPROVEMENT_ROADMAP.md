@@ -95,7 +95,7 @@ duplicate gates/files or a schema library solely for scanner keywords.
 | R1 | Running-child cancellation regression, readiness handshake, cleanup; normal and pre-cancel paths preserved | Implemented; Windows focused x3/full/vet/lint pass; native CI pending |
 | R2 | Reproduce inherited-pipe runner wait; fix minimally with sibling regression; state process-tree limits accurately | Implemented; Windows repeated/full/vet/lint pass; native CI pending |
 | R3 | Native Windows pip.cmd/pip3.cmd execution with spaced paths, literal args, stderr and child exit; compare existing installer checks to avoid duplication | Pending audit/test |
-| R4 | Stronger fuzz invariants for validation/translation/environment; seeds plus bounded fuzz smoke run; no external dependencies | Pending |
+| R4 | Stronger fuzz invariants for validation/translation/environment; seeds plus bounded fuzz smoke run; no external dependencies | Implemented; three bounded Windows fuzz campaigns and lint passed |
 | R5 | Correct existing architecture document; add rationale, CLI failure/cancellation contract, test mapping and direct README link | Pending; suitable small disclosed PR |
 | R6 | Confirm Dependabot config is tracked and remote updates/CI visible; only fix a demonstrated configuration gap | Config verified locally/remotely; historical update PRs exist; no new configuration needed |
 | R7 | Full verification and fresh committed clone; native CI on final SHA; update this ledger with evidence | Pending |
@@ -165,7 +165,12 @@ execution evidence. Test sandbox fixtures must not mutate real profiles or PATH.
 - R6 remote .github/dependabot.yml exists. Historical update PRs #1/#2 were
   closed; no claim they merged or prove current schedule execution. Old Docker
   PRs #3/#4 are historical only; current config has no Docker ecosystem.
-- Next: commit/push R2, then R3 stream assertions and R4 fuzz invariants.
+- R4: fuzz checks now assert routing prefix, literal operands after --, input
+  immutability/non-aliasing, typed override errors, preserved environment entries
+  and idempotent defaulting. Bounded campaigns passed: translation 28,339 execs,
+  override 105,641 execs, environment 69,015 execs; lint 0 issues. These counts
+  describe this local run, not exhaustive verification.
+- Next: R3 stream assertions, R5 architecture documentation PR, full verification.
 - Completion is NOT claimed: R1-R8 need evidence or an explicit documented
   disposition. Update this ledger after every completed concern.
 
