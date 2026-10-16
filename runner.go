@@ -83,7 +83,7 @@ func exitCode(err error) (int, error) {
 		}
 		return exitGeneral, nil
 	}
-	return exitCannotExecute, fmt.Errorf("%w: %v", ErrCannotExecute, err)
+	return exitCannotExecute, fmt.Errorf("%w: %w", ErrCannotExecute, err)
 }
 
 func findUV() (string, error) {

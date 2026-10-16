@@ -27,4 +27,3 @@ var (
 	// ErrRecursiveExecution prevents uvpip from calling itself in an infinite loop.
 	ErrRecursiveExecution = errors.New("uv resolves to uvpip itself; refusing recursive execution")
 )
-

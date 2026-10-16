@@ -9,14 +9,14 @@ import (
 func validateTranslationFlags(args []string) error {
 	quiet, verbose := false, false
 	for _, arg := range args {
-		if arg == "--" {
+		switch {
+		case arg == "--":
 			return nil // Remaining arguments are literal operands.
-		}
-		if arg == "--quiet" {
+		case arg == "--quiet":
 			quiet = true
-		} else if arg == "--verbose" {
+		case arg == "--verbose":
 			verbose = true
-		} else if strings.HasPrefix(arg, "-") && !strings.HasPrefix(arg, "--") && len(arg) > 1 {
+		case strings.HasPrefix(arg, "-") && !strings.HasPrefix(arg, "--") && len(arg) > 1:
 			for i := 1; i < len(arg); i++ {
 				switch arg[i] {
 				case 'q':
