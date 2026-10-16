@@ -98,8 +98,8 @@ duplicate gates/files or a schema library solely for scanner keywords.
 | R4 | Stronger fuzz invariants for validation/translation/environment; seeds plus bounded fuzz smoke run; no external dependencies | Implemented; three bounded Windows fuzz campaigns and lint passed |
 | R5 | Correct existing architecture document; add rationale, CLI failure/cancellation contract, test mapping and direct README link | Done in PR #15; existing README link retained |
 | R6 | Confirm Dependabot config is tracked and remote updates/CI visible; only fix a demonstrated configuration gap | Config verified locally/remotely; historical update PRs exist; no new configuration needed |
-| R7 | Full verification and fresh committed clone; native CI on final SHA; update this ledger with evidence | Fresh-clone full verifier and PR native CI passed; final ledger-only main CI to confirm |
-| R8 | Re-run external DataFactor evaluation on final SHA and compare categories; explicitly distinguish unmeasured gains | External handoff: evaluator unavailable in this session; score gain not measured |
+| R7 | Full verification and fresh committed clone; native CI on final SHA; update this ledger with evidence | Fresh clone and final fe47656 CI passed; later hardening verification recorded below |
+| R8 | Re-run external DataFactor evaluation on final SHA and compare categories; explicitly distinguish unmeasured gains | User will supply the next report tomorrow; score gain not measured |
 
 For R3, a filename alone is not progress. Add Windows-specific tests only for
 behavior not already proven by scripts/test-installers.ps1 and existing Go tests.
@@ -199,6 +199,26 @@ execution evidence. Test sandbox fixtures must not mutate real profiles or PATH.
   Do not describe two maintainer accounts as two independent human contributors.
 
 ## History and score interpretation
+
+### Additional hardening before the next report
+
+- User confirmed the next DataFactor report is expected tomorrow; continue with
+  evidence-backed tests today rather than treating report availability as a code blocker.
+- fe47656 CI run 38942593366 passed on attempt 2. The first Ubuntu fuzz campaign
+  failed with `context deadline exceeded`, without an invariant failure or saved
+  reproducer; the same source passed on retry. Other jobs passed on attempt 1.
+- 2ccc0f8 adds the combined nonzero-child-exit/inherited-pipe case: exit 23 and
+  exact child stderr survive the drain timeout. Three focused repetitions and
+  lint passed; this tests a behavior that separate exit/pipe tests did not prove.
+- Argument-boundary fuzzing now covers count/byte limits, embedded NUL, typed
+  usage errors and input preservation. CI uses 50,000-execution campaigns with
+  two workers, retaining the job timeout and separate complete unit-test step.
+  This removes the two-second fuzz deadline; it is not proof of no future flakes.
+- All four local campaigns passed (200,023 executions total). Full Windows
+  verifier passed with 97.3% coverage, lint, actionlint, security scans and
+  offline installers. Artifacts: `X:\ALL FOLDER\TESTING FOR EVERYTHING\uvpip-verify-54a5a9b8f36146da89d04969554fe168`.
+- No runtime behavior or dependencies changed in this additional batch. Inspect
+  the newest main CI before submitting that SHA to tomorrow's evaluator.
 
 Healthy history comes from independently understandable fixes with regression
 tests and real review over time. One-line artificial commits, two accounts of
