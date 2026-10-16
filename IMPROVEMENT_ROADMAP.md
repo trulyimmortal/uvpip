@@ -92,14 +92,14 @@ duplicate gates/files or a schema library solely for scanner keywords.
 | ID | Work and acceptance evidence | Status |
 | --- | --- | --- |
 | R0 | Save baseline, prioritized roadmap, constraints and handoff | Done: this document |
-| R1 | Running-child cancellation regression, readiness handshake, cleanup; normal and pre-cancel paths preserved | Implemented; Windows focused x3/full/vet/lint pass; native CI pending |
-| R2 | Reproduce inherited-pipe runner wait; fix minimally with sibling regression; state process-tree limits accurately | Implemented; Windows repeated/full/vet/lint pass; native CI pending |
+| R1 | Running-child cancellation regression, readiness handshake, cleanup; normal and pre-cancel paths preserved | Done; focused/full tests and native three-OS CI passed |
+| R2 | Reproduce inherited-pipe runner wait; fix minimally with sibling regression; state process-tree limits accurately | Done; red regression proof, repeated/full tests and native CI passed |
 | R3 | Native Windows pip.cmd/pip3.cmd execution with spaced paths, literal args, stderr and child exit; compare existing installer checks to avoid duplication | Implemented; full Windows verifier passed including redirected streams |
 | R4 | Stronger fuzz invariants for validation/translation/environment; seeds plus bounded fuzz smoke run; no external dependencies | Implemented; three bounded Windows fuzz campaigns and lint passed |
-| R5 | Correct existing architecture document; add rationale, CLI failure/cancellation contract, test mapping and direct README link | Pending; suitable small disclosed PR |
+| R5 | Correct existing architecture document; add rationale, CLI failure/cancellation contract, test mapping and direct README link | Done in PR #15; existing README link retained |
 | R6 | Confirm Dependabot config is tracked and remote updates/CI visible; only fix a demonstrated configuration gap | Config verified locally/remotely; historical update PRs exist; no new configuration needed |
-| R7 | Full verification and fresh committed clone; native CI on final SHA; update this ledger with evidence | Pending |
-| R8 | Re-run external DataFactor evaluation on final SHA and compare categories; explicitly distinguish unmeasured gains | External reassessment needed |
+| R7 | Full verification and fresh committed clone; native CI on final SHA; update this ledger with evidence | Fresh-clone full verifier and PR native CI passed; final ledger-only main CI to confirm |
+| R8 | Re-run external DataFactor evaluation on final SHA and compare categories; explicitly distinguish unmeasured gains | External handoff: evaluator unavailable in this session; score gain not measured |
 
 For R3, a filename alone is not progress. Add Windows-specific tests only for
 behavior not already proven by scripts/test-installers.ps1 and existing Go tests.
@@ -175,9 +175,28 @@ execution evidence. Test sandbox fixtures must not mutate real profiles or PATH.
   Full Windows verifier passed with 97.3% coverage; artifacts:
   `X:\ALL FOLDER\TESTING FOR EVERYTHING\uvpip-verify-7a9e8332e05e40519b065d45de1665b9`.
 - Native CI 38898426840 at 4fadc48 passed for R1/R2/R4.
-- Next: R5 architecture documentation PR, fresh-clone verification and final CI.
-- Completion is NOT claimed: R1-R8 need evidence or an explicit documented
-  disposition. Update this ledger after every completed concern.
+- R5: issue #14 and PR #15 created for actual documentation contradictions.
+  trulyimmortal authored the docs; yv3000 merged after review and green checks.
+  PR explicitly discloses shared ownership and AI assistance. Merge: 7b06ff6.
+  Review corrected nonzero-exit precedence and narrowed integration/fuzz claims.
+- R7: fresh independent local clone at d1fd368 passed the complete Windows
+  verifier with 97.3% coverage. Clone: `X:\ALL FOLDER\TESTING FOR EVERYTHING\uvpip-clean-b534cbafba0e44d4a63f4db81e98ad9b`.
+  Artifacts: `X:\ALL FOLDER\TESTING FOR EVERYTHING\uvpip-verify-1a1c2af65bd848e29319e2210b17acd5`.
+  `git diff d1fd368 7b06ff6` is empty: squash merge preserves the tested tree.
+  Native CI runs 38899236539 (stream tests) and 38941919516 (final PR) passed
+  all four jobs. Coverage artifacts for Windows/Linux/macOS were available.
+  govulncheck found no reachable vulnerable calls; uncalled dependency advisories
+  remain reported. This is not an assertion of zero vulnerabilities everywhere.
+- Read-only agent review found no additional runtime correctness regression;
+  its one documentation finding was fixed. Shortcut-marker scan found none.
+- Release automation remains a separate follow-up: CONTRIBUTING.md already
+  documents that publishing does not wait for CI and requires maintainer checks.
+  No release was triggered. Parser expansion remains a compatibility research
+  task (option values/bundled flags); do not add a full pip parser speculatively.
+- Next maintainer/Antigravity step: confirm CI for the final ledger commit,
+  submit that main SHA plus ARCHITECTURE.md, dependency policy and per-OS
+  coverage artifacts to DataFactor, then record the new category scores here.
+  Do not describe two maintainer accounts as two independent human contributors.
 
 ## History and score interpretation
 
