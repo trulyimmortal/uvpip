@@ -47,8 +47,9 @@ pip / pip3 shim or shell function
 `runUVContext` uses `exec.CommandContext` to cancel the direct uv child. Ordinary
 child exit codes propagate; discovery and startup failures map to 127 and 126.
 There is no installation-duration timeout. A one-second `WaitDelay` bounds
-Go-managed output-pipe draining after child exit or cancellation; if descendants
-retain those pipes, uvpip reports the drain failure and returns 1. This does not
+Go-managed output-pipe draining after child exit or cancellation; if uv exits
+successfully but descendants retain those pipes beyond the bound, uvpip reports
+the drain failure and returns 1. Nonzero child exit codes are preserved. This does not
 terminate a whole process tree or bound a caller's blocked custom writer.
 Doctor probes use their own five-second context timeout and one-second drain bound.
 
