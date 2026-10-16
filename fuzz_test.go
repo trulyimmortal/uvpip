@@ -74,3 +74,36 @@ func FuzzBuildEnv(f *testing.F) {
 		}
 	})
 }
+
+func FuzzValidateArgBounds(f *testing.F) {
+	for _, seed := range []struct {
+		value string
+		count uint16
+	}{
+		{"pkg", 0}, {"pkg", 1}, {"pkg", 512}, {"pkg", 513},
+		{strings.Repeat("a", 4096), 1}, {strings.Repeat("a", 4097), 1},
+		{"pkg\x00name", 1}, {"é", 512},
+	} {
+		f.Add(seed.value, seed.count)
+	}
+	f.Fuzz(func(t *testing.T, value string, count uint16) {
+		// Bound allocation while exercising both sides of the 512-argument limit.
+		args := make([]string, int(count)%514)
+		for i := range args {
+			args[i] = value
+		}
+		err := validateArgBounds(args)
+		invalid := len(args) > 512 || (len(args) > 0 && (len(value) > 4096 || strings.ContainsRune(value, '\x00')))
+		if (err != nil) != invalid {
+			t.Fatalf("boundary acceptance mismatch: count=%d bytes=%d error=%v", len(args), len(value), err)
+		}
+		if err != nil && (!errors.Is(err, ErrInvalidArgs) || !errors.Is(err, errUsage)) {
+			t.Fatalf("boundary rejection lost its error type: %v", err)
+		}
+		for _, arg := range args {
+			if arg != value {
+				t.Fatal("validation mutated input")
+			}
+		}
+	})
+}
