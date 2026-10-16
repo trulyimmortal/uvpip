@@ -32,10 +32,24 @@ func TestSentinelErrors(t *testing.T) {
 			expected: "uv executable not found",
 		},
 		{
+			name:     "ErrUsage",
+			err:      ErrUsage,
+			expected: "invalid arguments: usage error",
+		},
+		{
+			name:     "ErrCannotExecute",
+			err:      ErrCannotExecute,
+			expected: "cannot execute uv binary",
+		},
+		{
 			name:     "ErrRecursiveExecution",
 			err:      ErrRecursiveExecution,
 			expected: "uv resolves to uvpip itself; refusing recursive execution",
 		},
+	}
+
+	if !errors.Is(ErrUsage, ErrInvalidArgs) {
+		t.Errorf("expected ErrUsage to wrap ErrInvalidArgs")
 	}
 
 	seen := make(map[string]bool)

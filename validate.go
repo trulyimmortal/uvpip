@@ -8,7 +8,7 @@ import (
 
 // errUsage marks input rejected before uv starts; runCLI maps it to exit status 2.
 // It wraps ErrInvalidArgs so callers can inspect failure types programmatically.
-var errUsage = fmt.Errorf("%w: usage error", ErrInvalidArgs)
+var errUsage = ErrUsage
 
 // CLIInputs specifies all user-supplied inputs evaluated at CLI boundaries:
 // command arguments and environment configuration overrides.

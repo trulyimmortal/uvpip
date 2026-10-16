@@ -9,13 +9,22 @@ import (
 func validateTranslationFlags(args []string) error {
 	quiet, verbose := false, false
 	for _, arg := range args {
-		switch arg {
-		case "--":
+		if arg == "--" {
 			return nil // Remaining arguments are literal operands.
-		case "-q", "--quiet":
+		}
+		if arg == "--quiet" {
 			quiet = true
-		case "-v", "--verbose":
+		} else if arg == "--verbose" {
 			verbose = true
+		} else if strings.HasPrefix(arg, "-") && !strings.HasPrefix(arg, "--") && len(arg) > 1 {
+			for i := 1; i < len(arg); i++ {
+				switch arg[i] {
+				case 'q':
+					quiet = true
+				case 'v':
+					verbose = true
+				}
+			}
 		}
 		if quiet && verbose {
 			return fmt.Errorf("%w: --quiet and --verbose cannot be combined", errUsage)
