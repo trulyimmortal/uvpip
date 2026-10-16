@@ -56,7 +56,7 @@ Doctor probes use their own five-second context timeout and one-second drain bou
 ## Tests
 
 Each `*.go` file has a `*_test.go` sibling, and `integration_test.go` exercises
-the complete install-doctor-uninstall lifecycle. `runner_test.go`'s `TestMain` turns
+a simulated installation layout, doctor/CLI execution and cleanup. `runner_test.go`'s `TestMain` turns
 the test binary into an offline fake uv (`fixtureUV`), so subprocess behavior is
 tested without uv or network. Installer suites in `scripts/` mock `curl`, `uname`,
 and uv. CI enforces a 90% statement-coverage floor; see [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -65,6 +65,6 @@ and uv. CI enforces a 90% statement-coverage floor; see [CONTRIBUTING.md](CONTRI
 and descendants retaining output pipes, alongside pre-start cancellation and
 normal completion. Windows installer tests exercise both cmd shims with spaced
 paths, literal arguments, redirected stdin/stdout/stderr and nonzero child exits.
-Fuzz targets check typed validation errors, input preservation and environment
-defaulting invariants. Native CI runs on Windows, Linux and macOS, with race
+Fuzz targets check typed `ErrInvalidOverride` handling, translation input preservation
+and environment-defaulting invariants. Native CI runs on Windows, Linux and macOS, with race
 detection on Linux/macOS; these fixtures do not prove all real uv workloads.
