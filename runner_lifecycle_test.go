@@ -1,13 +1,79 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 )
+
+func runInheritedPipeFixture() {
+	if os.Getenv("UVPIP_TEST_MODE") == "hold-output" {
+		time.Sleep(8 * time.Second)
+		return
+	}
+	child := exec.Command(os.Args[0])
+	child.Env = append(os.Environ(), "UVPIP_TEST_MODE=hold-output")
+	child.Stdout, child.Stderr = os.Stdout, os.Stderr
+	if err := child.Start(); err != nil {
+		panic(err)
+	}
+	if err := os.WriteFile(os.Getenv("UVPIP_TEST_PID"), []byte(strconv.Itoa(child.Process.Pid)), 0600); err != nil {
+		panic(err)
+	}
+	_ = child.Process.Release()
+}
+
+func testRunUVInheritedOutputPipes(t *testing.T) {
+	for _, tt := range []struct {
+		name, mode string
+		wantCode   int
+	}{
+		{"ordinary output", "version", exitOK},
+		{"descendant retains pipes", "inherit-output", exitGeneral},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			fixtureUV(t)
+			pidFile := filepath.Join(t.TempDir(), "descendant.pid")
+			t.Setenv("UVPIP_TEST_MODE", tt.mode)
+			t.Setenv("UVPIP_TEST_PID", pidFile)
+			t.Cleanup(func() {
+				data, err := os.ReadFile(pidFile)
+				if err != nil {
+					return
+				}
+				pid, err := strconv.Atoi(string(data))
+				if err != nil {
+					t.Error(err)
+					return
+				}
+				if child, err := os.FindProcess(pid); err == nil {
+					_ = child.Kill()
+					_, _ = child.Wait()
+				}
+			})
+			var out, stderr bytes.Buffer
+			started := time.Now()
+			code := runUVContext(context.Background(), nil, nil, &out, &stderr, quiet)
+			if code != tt.wantCode {
+				t.Fatalf("exit=%d want=%d stderr=%s", code, tt.wantCode, &stderr)
+			}
+			if time.Since(started) >= 5*time.Second {
+				t.Fatal("runner waited for descendant pipes")
+			}
+			if tt.wantCode != 0 && !strings.Contains(stderr.String(), "output pipes") {
+				t.Fatalf("missing output-pipe diagnostic: %s", &stderr)
+			}
+		})
+	}
+}
 
 // The readiness output proves that cancellation happens after process startup.
 func runCancellationFixture() {

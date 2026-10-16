@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -26,6 +25,8 @@ func TestMain(m *testing.M) {
 		switch os.Getenv("UVPIP_TEST_MODE") {
 		case "wait-for-cancel":
 			runCancellationFixture()
+		case "inherit-output", "hold-output":
+			runInheritedPipeFixture()
 		case "exit":
 			fmt.Fprint(os.Stderr, "child failure")
 			os.Exit(23)
@@ -329,15 +330,8 @@ func TestFindUVRejectsSelf(t *testing.T) {
 	}
 }
 
-func TestRunUVContextCancellation(t *testing.T) {
-	fixtureUV(t)
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-	var stderr bytes.Buffer
-	code := runUVContext(ctx, []string{"pip", "list"}, nil, io.Discard, &stderr, quiet)
-	if code == 0 {
-		t.Fatal("expected non-zero exit code on canceled context")
-	}
+func TestRunUVInheritedOutputPipes(t *testing.T) {
+	testRunUVInheritedOutputPipes(t)
 }
 
 func TestBuildEnv(t *testing.T) {

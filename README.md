@@ -189,6 +189,13 @@ rejected with **2** before uv starts. Failure to locate uv returns **127**;
 failure to start the resolved executable returns **126**. Signal termination has
 no portable child exit code and returns **1**.
 
+Interrupt cancellation terminates the direct uv child; it does not guarantee
+termination of every descendant. When streams require Go-managed copying, pipe
+draining is bounded to one second after child exit or cancellation. If uv exits
+successfully but a descendant retains its output pipes beyond that bound, uvpip
+reports the incomplete output and returns **1**. This is not a runtime limit on
+package installation and does not bound arbitrary blocking caller-supplied I/O.
+
 ### Environment Selection
 
 uvpip preserves the user environment, including explicit `UV_SYSTEM_PYTHON`.

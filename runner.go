@@ -51,8 +51,16 @@ func runUVContext(ctx context.Context, args []string, stdin io.Reader, stdout, s
 	cmd := exec.CommandContext(ctx, uvPath, args...) //nolint:gosec // G204: executing the resolved uv binary is the program's purpose.
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = stdin, stdout, stderr
 	cmd.Env = childEnv
+	// Bound pipe draining after exit/cancellation if descendants retain handles.
+	cmd.WaitDelay = time.Second
 	start := time.Now()
-	code, startErr := exitCode(cmd.Run())
+	runErr := cmd.Run()
+	if errors.Is(runErr, exec.ErrWaitDelay) {
+		log.Info("uv output pipes did not close", "error", runErr)
+		fmt.Fprintln(stderr, "[uvpip] uv output pipes did not close after exit")
+		return exitGeneral
+	}
+	code, startErr := exitCode(runErr)
 	if startErr != nil {
 		log.Info("uv execution failed", "path", uvPath, "error", startErr)
 		fmt.Fprintf(stderr, "[uvpip] cannot execute uv at %q: %v\n", uvPath, startErr)

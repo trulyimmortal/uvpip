@@ -93,11 +93,11 @@ duplicate gates/files or a schema library solely for scanner keywords.
 | --- | --- | --- |
 | R0 | Save baseline, prioritized roadmap, constraints and handoff | Done: this document |
 | R1 | Running-child cancellation regression, readiness handshake, cleanup; normal and pre-cancel paths preserved | Implemented; Windows focused x3/full/vet/lint pass; native CI pending |
-| R2 | Reproduce inherited-pipe runner wait; fix minimally with sibling regression; state process-tree limits accurately | Pending |
+| R2 | Reproduce inherited-pipe runner wait; fix minimally with sibling regression; state process-tree limits accurately | Implemented; Windows repeated/full/vet/lint pass; native CI pending |
 | R3 | Native Windows pip.cmd/pip3.cmd execution with spaced paths, literal args, stderr and child exit; compare existing installer checks to avoid duplication | Pending audit/test |
 | R4 | Stronger fuzz invariants for validation/translation/environment; seeds plus bounded fuzz smoke run; no external dependencies | Pending |
 | R5 | Correct existing architecture document; add rationale, CLI failure/cancellation contract, test mapping and direct README link | Pending; suitable small disclosed PR |
-| R6 | Confirm Dependabot config is tracked and remote updates/CI visible; only fix a demonstrated configuration gap | Pending remote check |
+| R6 | Confirm Dependabot config is tracked and remote updates/CI visible; only fix a demonstrated configuration gap | Config verified locally/remotely; historical update PRs exist; no new configuration needed |
 | R7 | Full verification and fresh committed clone; native CI on final SHA; update this ledger with evidence | Pending |
 | R8 | Re-run external DataFactor evaluation on final SHA and compare categories; explicitly distinguish unmeasured gains | External reassessment needed |
 
@@ -152,8 +152,20 @@ execution evidence. Test sandbox fixtures must not mutate real profiles or PATH.
 - Windows focused lifecycle tests passed three repetitions; full tests passed
   at 97.2% statement coverage; go vet and golangci-lint passed (0 issues).
 - No production/runtime code changed in R1. runner_test.go remains 397 lines.
-- Next action: push the committed roadmap/R1; inspect native CI, then reproduce
-  the R2 inherited-pipe issue in a bounded fixture before editing runner behavior.
+- R1 native CI run 38897701084: all four jobs passed.
+- R2 red proof: parent returned success only after 9.41 seconds waiting for
+  descendant pipes; expected exit 1 failed before production edits. New WaitDelay
+  bounds drain after exit/cancellation; ErrWaitDelay prints a specific diagnostic
+  and returns 1, not misleading startup failure 126. Repeated focused tests,
+  full Windows tests (97.3%), vet and lint passed. Descendant fixture is bounded
+  and explicitly killed during test cleanup. Runtime makes no tree-kill promise.
+- R3 audit: existing Windows suite covers spaced/quoted home, both cmd shims,
+  argument forwarding, exit code 23 and profile lifecycle. Add missing stdin/
+  stderr assertions to that suite rather than duplicate it in windows_test.go.
+- R6 remote .github/dependabot.yml exists. Historical update PRs #1/#2 were
+  closed; no claim they merged or prove current schedule execution. Old Docker
+  PRs #3/#4 are historical only; current config has no Docker ecosystem.
+- Next: commit/push R2, then R3 stream assertions and R4 fuzz invariants.
 - Completion is NOT claimed: R1-R8 need evidence or an explicit documented
   disposition. Update this ledger after every completed concern.
 
