@@ -25,7 +25,7 @@ func TestMain(m *testing.M) {
 		switch os.Getenv("UVPIP_TEST_MODE") {
 		case "wait-for-cancel":
 			runCancellationFixture()
-		case "inherit-output", "hold-output":
+		case "inherit-output", "inherit-output-failure", "hold-output":
 			runInheritedPipeFixture()
 		case "exit":
 			fmt.Fprint(os.Stderr, "child failure")

@@ -29,6 +29,10 @@ func runInheritedPipeFixture() {
 		panic(err)
 	}
 	_ = child.Process.Release()
+	if os.Getenv("UVPIP_TEST_MODE") == "inherit-output-failure" {
+		fmt.Fprint(os.Stderr, "child failure")
+		os.Exit(23)
+	}
 }
 
 func testRunUVInheritedOutputPipes(t *testing.T) {
@@ -38,6 +42,7 @@ func testRunUVInheritedOutputPipes(t *testing.T) {
 	}{
 		{"ordinary output", "version", exitOK},
 		{"descendant retains pipes", "inherit-output", exitGeneral},
+		{"child failure retains pipes", "inherit-output-failure", 23},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			fixtureUV(t)
@@ -68,8 +73,11 @@ func testRunUVInheritedOutputPipes(t *testing.T) {
 			if time.Since(started) >= 5*time.Second {
 				t.Fatal("runner waited for descendant pipes")
 			}
-			if tt.wantCode != 0 && !strings.Contains(stderr.String(), "output pipes") {
+			if tt.wantCode == exitGeneral && !strings.Contains(stderr.String(), "output pipes") {
 				t.Fatalf("missing output-pipe diagnostic: %s", &stderr)
+			}
+			if tt.wantCode == 23 && stderr.String() != "child failure" {
+				t.Fatalf("child failure diagnostic changed: %q", &stderr)
 			}
 		})
 	}
