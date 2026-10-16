@@ -24,6 +24,8 @@ var quiet = slog.New(slog.DiscardHandler)
 func TestMain(m *testing.M) {
 	if os.Getenv("UVPIP_TEST_CHILD") == "1" {
 		switch os.Getenv("UVPIP_TEST_MODE") {
+		case "wait-for-cancel":
+			runCancellationFixture()
 		case "exit":
 			fmt.Fprint(os.Stderr, "child failure")
 			os.Exit(23)

@@ -92,7 +92,7 @@ duplicate gates/files or a schema library solely for scanner keywords.
 | ID | Work and acceptance evidence | Status |
 | --- | --- | --- |
 | R0 | Save baseline, prioritized roadmap, constraints and handoff | Done: this document |
-| R1 | Running-child cancellation regression, readiness handshake, cleanup; normal and pre-cancel paths preserved | Pending |
+| R1 | Running-child cancellation regression, readiness handshake, cleanup; normal and pre-cancel paths preserved | Implemented; Windows focused x3/full/vet/lint pass; native CI pending |
 | R2 | Reproduce inherited-pipe runner wait; fix minimally with sibling regression; state process-tree limits accurately | Pending |
 | R3 | Native Windows pip.cmd/pip3.cmd execution with spaced paths, literal args, stderr and child exit; compare existing installer checks to avoid duplication | Pending audit/test |
 | R4 | Stronger fuzz invariants for validation/translation/environment; seeds plus bounded fuzz smoke run; no external dependencies | Pending |
@@ -145,9 +145,15 @@ execution evidence. Test sandbox fixtures must not mutate real profiles or PATH.
 - 2026-10-16: read all five supplied images; recorded score 80 and category table.
 - Checked clean checkout at 4bcbdb2; v1.0.2 release change predates this work.
 - Read runner/doctor/fuzz paths, architecture and dependency automation.
-- No runtime changes or new test execution yet in this goal run.
-- Next action: inspect TestMain/fixtureUV and add a deterministic running-child
-  cancellation regression as R1, keeping the code/test commit atomic.
+- R1: runner_lifecycle_test.go uses child stdout readiness to cancel only after
+  startup; bounded sleeping fixture exits if cancellation regresses. CommandContext
+  Run waits/reaps the direct child. Pre-start and post-readiness cases are checked.
+  This does not prove process-tree termination or inherited-pipe handling (R2).
+- Windows focused lifecycle tests passed three repetitions; full tests passed
+  at 97.2% statement coverage; go vet and golangci-lint passed (0 issues).
+- No production/runtime code changed in R1. runner_test.go remains 397 lines.
+- Next action: push the committed roadmap/R1; inspect native CI, then reproduce
+  the R2 inherited-pipe issue in a bounded fixture before editing runner behavior.
 - Completion is NOT claimed: R1-R8 need evidence or an explicit documented
   disposition. Update this ledger after every completed concern.
 
