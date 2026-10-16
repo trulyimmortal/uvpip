@@ -42,6 +42,9 @@ jobs:
       - name: Typecheck (go vet)
         run: go vet ./...
 
+      - name: Dependency freshness check (go list -m -u)
+        run: go list -m -u all
+
       - name: Run linter (golangci-lint)
         run: golangci-lint run ./...
 
