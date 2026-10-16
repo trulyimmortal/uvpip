@@ -94,7 +94,7 @@ duplicate gates/files or a schema library solely for scanner keywords.
 | R0 | Save baseline, prioritized roadmap, constraints and handoff | Done: this document |
 | R1 | Running-child cancellation regression, readiness handshake, cleanup; normal and pre-cancel paths preserved | Implemented; Windows focused x3/full/vet/lint pass; native CI pending |
 | R2 | Reproduce inherited-pipe runner wait; fix minimally with sibling regression; state process-tree limits accurately | Implemented; Windows repeated/full/vet/lint pass; native CI pending |
-| R3 | Native Windows pip.cmd/pip3.cmd execution with spaced paths, literal args, stderr and child exit; compare existing installer checks to avoid duplication | Pending audit/test |
+| R3 | Native Windows pip.cmd/pip3.cmd execution with spaced paths, literal args, stderr and child exit; compare existing installer checks to avoid duplication | Implemented; full Windows verifier passed including redirected streams |
 | R4 | Stronger fuzz invariants for validation/translation/environment; seeds plus bounded fuzz smoke run; no external dependencies | Implemented; three bounded Windows fuzz campaigns and lint passed |
 | R5 | Correct existing architecture document; add rationale, CLI failure/cancellation contract, test mapping and direct README link | Pending; suitable small disclosed PR |
 | R6 | Confirm Dependabot config is tracked and remote updates/CI visible; only fix a demonstrated configuration gap | Config verified locally/remotely; historical update PRs exist; no new configuration needed |
@@ -170,7 +170,12 @@ execution evidence. Test sandbox fixtures must not mutate real profiles or PATH.
   and idempotent defaulting. Bounded campaigns passed: translation 28,339 execs,
   override 105,641 execs, environment 69,015 execs; lint 0 issues. These counts
   describe this local run, not exhaustive verification.
-- Next: R3 stream assertions, R5 architecture documentation PR, full verification.
+- R3: both repository cmd shims preserve redirected multiline stdin/stdout,
+  separate stderr and exit 23 under the existing spaced/quoted fixture path.
+  Full Windows verifier passed with 97.3% coverage; artifacts:
+  `X:\ALL FOLDER\TESTING FOR EVERYTHING\uvpip-verify-7a9e8332e05e40519b065d45de1665b9`.
+- Native CI 38898426840 at 4fadc48 passed for R1/R2/R4.
+- Next: R5 architecture documentation PR, fresh-clone verification and final CI.
 - Completion is NOT claimed: R1-R8 need evidence or an explicit documented
   disposition. Update this ledger after every completed concern.
 

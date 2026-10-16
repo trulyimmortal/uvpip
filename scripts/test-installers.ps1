@@ -73,6 +73,11 @@ public static class InstallerFixture {
     public static int Main(string[] args) {
         if (args.Length == 1 && args[0] == "--version") { System.Console.WriteLine("uvpip offline"); return 0; }
         if (args.Length == 1 && args[0] == "--fail") return 23;
+        if (args.Length == 1 && args[0] == "--streams") {
+            System.Console.Out.Write(System.Console.In.ReadToEnd());
+            System.Console.Error.Write("fixture stderr");
+            return 23;
+        }
         foreach (string arg in args) System.Console.WriteLine("<" + arg + ">");
         return 0;
     }
@@ -100,6 +105,14 @@ public static class InstallerFixture {
         Copy-Item -LiteralPath (Join-Path $repo "bin\$name") -Destination $shim -Force
         & $shim --fail
         Assert ($LASTEXITCODE -eq 23) 'repository cmd exit status'
+        $stdinPath = Join-Path $work 'stdin.txt'
+        $stdoutPath = Join-Path $work 'stdout.txt'
+        $stderrPath = Join-Path $work 'stderr.txt'
+        [IO.File]::WriteAllText($stdinPath, "input with spaces`r`nsecond line", (New-Object Text.UTF8Encoding($false)))
+        $child = Start-Process -FilePath $env:ComSpec -ArgumentList ('/d /s /c ""{0}" --streams"' -f $shim) -WindowStyle Hidden -Wait -PassThru -RedirectStandardInput $stdinPath -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
+        Assert ($child.ExitCode -eq 23) 'cmd redirected exit status'
+        Assert ((Bytes $stdinPath) -ceq (Bytes $stdoutPath)) 'cmd stdin/stdout bytes changed'
+        Assert ([IO.File]::ReadAllText($stderrPath) -ceq 'fixture stderr') 'cmd stderr changed'
     }
     & $uninstaller -NoPath 6>$null
     $removedProfile = Bytes $PROFILE
