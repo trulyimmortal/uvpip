@@ -155,7 +155,7 @@ jobs:
           if [ -n "$GITHUB_STEP_SUMMARY" ]; then
             printf '### Coverage Summary\n- Total Statement Coverage: **%s%%**\n' "$total" >> "$GITHUB_STEP_SUMMARY"
           fi
-          awk -v total="$total" -v min="$COVERAGE_THRESHOLD" 'BEGIN { if (total == "" || total + 0 < min) { print "Coverage below threshold"; exit 1 } }'
+          awk -v total="$total" -v min="$COVERAGE_THRESHOLD" 'BEGIN { if (total !~ /^[0-9]+([.][0-9]+)?$/ || total + 0 < min) { print "Coverage missing, invalid or below threshold"; exit 1 } }'
 
       - name: Go vulnerability audit (govulncheck)
         run: go tool govulncheck ./...
