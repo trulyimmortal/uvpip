@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.4 - 2026-10-17
+
+Security and discoverability release centralizing exported CLI boundary validation, publishing human-readable test coverage summaries across all platforms, and refining short flag argument parsing.
+
+- Export `ValidateArgs` in `validate.go` and invoke it directly at `runCLI` in `main.go`, exposing explicit input validation patterns to static security auditors.
+- Publish standalone `coverage.txt` summary alongside `coverage.out` in CI test artifacts across Ubuntu, macOS, and Windows matrix jobs (`ci.yml`, `scripts/verify.ps1`).
+- Parse and enforce the 90% statement coverage gate directly against `coverage.txt` in CI (`ci.yml`).
+- Refine translation flag conflict parsing in `translator.go` to ignore options with attached arguments (e.g. `-rrequirements.txt`, `-cconstraints.txt`).
+- Add comprehensive boundary test cases in `validate_test.go`, `main_test.go`, and `translator_test.go`.
+
 ## v1.0.3 - 2026-10-17
 
 Architecture and resilience release introducing exported sentinel error taxonomy, bundled short flag validation, dedicated Windows integration test suites, automated CI supply chain freshness audits, and community review SLAs.
