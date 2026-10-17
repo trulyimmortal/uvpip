@@ -217,7 +217,7 @@ Only point the override and PATH at trusted executables.
 
 ### Input Validation
 
-Before translating or launching pip commands, `ValidateInputs` enforces these boundaries:
+Before translating or launching pip commands, `runCLI` calls `ValidateArgs` to enforce these boundaries:
 
 - **Locally rejected (exit status 2)**: Blank commands, more than 512 arguments, arguments longer than 4,096 bytes, embedded null bytes, and conflicting `--quiet` (`-q`) and `--verbose` (`-v`) flags. Verbosity checking stops at `--`; subsequent arguments are literal operands. With no arguments, uvpip still prints help and exits successfully.
 - **Forwarded to uv**: Package names, valid options, standard pip flags, and index URLs within these boundaries. uv determines their meaning, selects the interpreter for `--python`, and may reject unsupported options.

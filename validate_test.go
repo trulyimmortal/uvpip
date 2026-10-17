@@ -22,13 +22,18 @@ func TestValidateArgs(t *testing.T) {
 		{"no args", nil, false},
 		{"empty command", []string{""}, false},
 		{"whitespace command", []string{" \t", "requests"}, false},
+		{"512 args", append([]string{"install"}, make([]string, 511)...), true},
+		{"513 args", append([]string{"install"}, make([]string, 512)...), false},
+		{"4096 bytes", []string{"install", strings.Repeat("é", 2048)}, true},
+		{"4097 bytes", []string{"install", strings.Repeat("é", 2048) + "a"}, false},
+		{"null byte", []string{"install", "private\x00value"}, false},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateArgs(tt.args)
+			err := ValidateArgs(tt.args)
 			if (err == nil) != tt.ok {
 				t.Fatalf("err = %v", err)
 			}
-			if err != nil && !errors.Is(err, errUsage) {
+			if err != nil && (!errors.Is(err, ErrUsage) || !errors.Is(err, ErrInvalidArgs)) {
 				t.Fatalf("not a usage error: %v", err)
 			}
 		})

@@ -33,7 +33,7 @@ func runCLI(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	}
 
 	// All other args: validate, translate pip → uv, and run
-	if err := ValidateInputs(CLIInputs{Args: args}); err != nil {
+	if err := ValidateArgs(args); err != nil {
 		fmt.Fprintf(stderr, "[uvpip] %v; run uvpip --help for usage\n", err)
 		return 2
 	}

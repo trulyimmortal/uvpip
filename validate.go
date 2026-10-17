@@ -22,7 +22,7 @@ type CLIInputs struct {
 // or ErrInvalidOverride if environment configuration overrides are malformed.
 func ValidateInputs(inputs CLIInputs) error {
 	if len(inputs.Args) > 0 || inputs.UVOverride == "" {
-		if err := validateArgs(inputs.Args); err != nil {
+		if err := ValidateArgs(inputs.Args); err != nil {
 			return err
 		}
 	}
@@ -55,10 +55,10 @@ func validateArgBounds(args []string) error {
 	return nil
 }
 
-// validateArgs rejects a blank pip command, which uv would only report as an
-// unrecognized empty subcommand, and enforces argument boundary constraints.
+// ValidateArgs centralizes argument bounds, blank-command rejection and
+// conflicting verbosity checks before translation or subprocess dispatch.
 // Values are never echoed: arguments can embed index credentials.
-func validateArgs(args []string) error {
+func ValidateArgs(args []string) error {
 	if len(args) == 0 || strings.TrimSpace(args[0]) == "" {
 		return fmt.Errorf("%w: pip command is empty", errUsage)
 	}

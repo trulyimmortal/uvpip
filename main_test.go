@@ -58,3 +58,28 @@ func TestCLIForwardsPipAndPip3(t *testing.T) {
 		t.Fatalf("child exit = %d", code)
 	}
 }
+
+func TestCLIValidationBeforeDiscovery(t *testing.T) {
+	// Missing uv would return 127 if invalid arguments reached discovery.
+	t.Setenv("UVPIP_UV", filepath.Join(t.TempDir(), "missing"))
+	for _, tt := range []struct {
+		name string
+		args []string
+	}{
+		{"blank", []string{" "}},
+		{"NUL", []string{"install", "private\x00value"}},
+		{"count", append([]string{"install"}, make([]string, 512)...)},
+		{"length", []string{"install", strings.Repeat("a", 4097)}},
+		{"conflict", []string{"install", "-q", "--verbose"}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			if code := runCLI(tt.args, nil, &stdout, &stderr); code != 2 {
+				t.Fatalf("exit = %d, want 2: %s", code, &stderr)
+			}
+			if stdout.Len() != 0 || !strings.Contains(stderr.String(), "usage") || strings.Contains(stderr.String(), "private") {
+				t.Fatalf("unexpected diagnostic: stdout=%q stderr=%q", &stdout, &stderr)
+			}
+		})
+	}
+}
