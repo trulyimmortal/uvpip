@@ -67,7 +67,7 @@ To independently verify that no third-party libraries are linked into the binary
 go list -deps -f '{{if and (not .Standard) (not .Module.Main)}}{{.ImportPath}}{{end}}' ./...
 ```
 
-This guarantee is enforced on every push in [CI](.github/workflows/ci.yml) via the `Verify zero runtime deps` step on all three operating systems. A failed dependency listing fails the check. Each test job also retains its coverage profile as a downloadable artifact for 14 days, including when the coverage gate fails.
+This guarantee is enforced on every push in [CI](.github/workflows/ci.yml) via the `Verify zero runtime deps` step on all three operating systems. A failed dependency listing fails the check. Each test job retains `coverage.out` and the per-function `coverage.txt` summary in its OS-specific artifact for 14 days, including when the coverage gate fails. The coverage gate reads that same text summary.
 
 ## Install From Source
 

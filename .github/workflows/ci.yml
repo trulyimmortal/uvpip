@@ -129,14 +129,18 @@ jobs:
         run: go test -count=1 ${{ matrix.race }} -covermode=atomic -coverprofile=coverage.out ./...
 
       - name: Coverage report
-        run: go tool cover -func=coverage.out
+        run: |
+          go tool cover -func=coverage.out > coverage.txt
+          cat coverage.txt
 
-      - name: Upload coverage profile
+      - name: Upload coverage profile and summary
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: coverage-${{ matrix.os }}
-          path: coverage.out
+          path: |
+            coverage.out
+            coverage.txt
           if-no-files-found: error
           retention-days: 14
 
@@ -146,7 +150,7 @@ jobs:
         env:
           COVERAGE_THRESHOLD: 90
         run: |
-          total=$(go tool cover -func=coverage.out | awk '$1 == "total:" { sub("%", "", $3); print $3 }')
+          total=$(awk '$1 == "total:" { sub("%", "", $3); print $3 }' coverage.txt)
           echo "Total statement coverage: ${total}% (Threshold: ${COVERAGE_THRESHOLD}%)"
           if [ -n "$GITHUB_STEP_SUMMARY" ]; then
             printf '### Coverage Summary\n- Total Statement Coverage: **%s%%**\n' "$total" >> "$GITHUB_STEP_SUMMARY"

@@ -1,31 +1,52 @@
 # uvpip reliability and evaluation roadmap
 
-Updated: 2026-10-16 (Asia/Calcutta). Initial checkout: `4bcbdb2` (v1.0.2).
+Updated: 2026-10-17 (Asia/Calcutta). Current planning baseline: latest `main`
+(`1d24a42`, v1.0.3 lineage). This revision records the new DataFactor regression
+report and the next implementation batch; no code changes are part of this step.
 This is the continuation/handoff document for Codex or Antigravity.
 
 ## Objective and honest baseline
 
 Improve the standalone CLI's real reliability and verifiable test evidence,
-prioritizing Architecture and Test Coverage. The supplied evaluation reports
-80 overall (B), not 88+. Category scores are judgments, not statement coverage:
+prioritizing Architecture, Test Coverage, Security Hygiene and CI/CD evidence.
+The latest supplied evaluation reports **74 overall (B)**, down from 80. Category
+scores are judgments, not statement coverage:
 
 | Category | Report score | Priority |
 | --- | ---: | --- |
-| Architecture & Robustness | 75 | First |
-| Test Coverage | 82 | First |
-| History & Maintenance | 55 | Organic, ongoing |
-| Security Hygiene | 85 | Preserve; address concrete boundary flaws |
+| Architecture & Robustness | 72 | First; centralize visible CLI validation |
+| Test Coverage | 68 | First; publish inspectable coverage text |
+| History & Maintenance | 58 | Organic; never manufacture authorship |
+| Security Hygiene | 78 | First; expose schema validation to scanners |
 | Docs & Onboarding | 85 | Correct actual contradictions |
 | Dependency Health | 85 | Verify existing update automation |
 | Code Cleanliness | 88 | Preserve minimal standard-library design |
-| CI/CD Maturity | 90 | Preserve native three-OS evidence |
+| CI/CD Maturity | 78 | First; bundle coverage summary per OS |
 
 Previous verified implementation commit `9cfa17d` had 97.2% Windows statement
 coverage and green native CI run 38766401800. Reverify current source; do not
 reuse that run as evidence for later changes. No guaranteed score-point gains.
 
-The report calls three accounts three humans. `yv3000` and `trulyimmortal`
+The latest regression cites 95 commits in 125 days, 91/2/2 author split and
+three contributors. `yv3000` and `trulyimmortal`
 belong to the same maintainer; account count is not human diversity.
+
+### Regression evidence and interpretation
+
+The benchmark bundle did not contain a standalone `coverage.txt`, even though
+CI enforced 90% and uploaded `coverage.out`; the evaluator therefore could not
+inspect human-readable per-function totals. The security scanner still reported
+an empty `input_validation_patterns` signal because the existing validation is
+discoverable through `ValidateInputs`/`validateArgs`, but not through the exact
+exported `ValidateArgs` entry-point pattern the rubric expects. Architecture was
+also penalized because the validation call is not visibly named at `runCLI`.
+These are evidence-discoverability gaps to fix with real contracts and artifacts,
+not fake scanner comments or duplicated validation logic.
+
+The report's Docker recommendation is explicitly rejected. A Dockerfile would
+misclassify this standalone CLI as infrastructure and violate the repository's
+zero-infrastructure rule. The dependency score is also not a reason to add a
+runtime library: the project remains standard-library-only.
 
 ## Non-negotiable working rules
 
@@ -50,6 +71,99 @@ belong to the same maintainer; account count is not human diversity.
 - Commit after each completed concern using Conventional Commits; push verified
   changes. No autonomous push-on-every-file agent: it could publish partial fixes.
 - No new tags/releases unless explicitly requested. Preserve existing releases.
+
+## Proposed v1.0.4 implementation plan (planning only)
+
+Coding starts only after the user switches to the requested Astra model. Each
+implementation item below must be reviewed against current callers before edits,
+and each Go behavior change must include sibling table-driven tests in the same
+atomic commit. The roadmap itself is intentionally not being mixed into a code
+commit in this planning step.
+
+### Phase A — make the validation contract statically visible
+
+1. Add exported `ValidateArgs(args []string) error` in `validate.go` as the one
+   argument-boundary entry point. It must reuse existing bounds, blank-command,
+   NUL-byte and quiet/verbose conflict checks; do not create a second parser.
+2. Change `runCLI` in `main.go` to call `ValidateArgs(args)` before translation,
+   uv discovery or subprocess execution. Preserve the current `errUsage`/
+   `ErrInvalidArgs` wrapping and exit status 2 mapping.
+3. Extend `validate_test.go` and the CLI tests with table-driven cases for:
+   nil/blank command, exactly 512 vs 513 arguments, exactly 4096 vs 4097-byte
+   arguments, NUL bytes, quiet/verbose conflicts, and valid literal values after
+   `--`. Assert the function error type and separately assert `runCLI` returns 2
+   without invoking uv. Keep secrets out of diagnostics.
+4. Recheck every caller of `ValidateInputs`, `validateArgs` and
+   `validateTranslationFlags` before removing or retaining helpers. The target
+   is one authoritative path, not exported aliases that drift.
+
+Acceptance: `rg` shows the named exported call at the CLI boundary; tests prove
+all existing limits and exit behavior; no runtime dependency or parser scope is
+expanded.
+
+### Phase B — publish inspectable coverage evidence
+
+1. In the matrix test job, keep `go test -coverprofile=coverage.out` and add a
+   separate `go tool cover -func=coverage.out > coverage.txt`, followed by
+   `cat coverage.txt` so CI logs contain the same report.
+2. Upload both files under the existing per-OS artifact name and retention. Do
+   not replace the profile or make the artifact conditional on a passing test.
+3. Make the threshold step read `coverage.txt`, parse the `total:` row, print
+   the configured `COVERAGE_THRESHOLD`, and fail closed on a missing/invalid row.
+   Preserve the global and step-level threshold environment variable.
+4. Update local verifier scripts to retain both files beneath TestRoot when they
+   generate coverage. This makes local and GitHub evidence use the same format.
+
+Acceptance: each Ubuntu/macOS/Windows artifact contains `coverage.out` and
+`coverage.txt`; CI logs show the total row; the threshold still enforces >=90%.
+
+### Phase C — coverage breadth and quality proof
+
+1. Inventory every tracked `*.go` source file and its sibling `*_test.go`; do
+   not add empty tests solely to satisfy a ratio. Preserve meaningful integration,
+   lifecycle and fuzz tests already present.
+2. Run the full isolated verifier and record the actual total. The target is the
+   current ~97% statement coverage, with no claim that statement coverage proves
+   compatibility with every uv version.
+3. Keep fuzz campaigns bounded and deterministic enough for CI. Prefer execution
+   counts over a short wall-clock deadline after the observed Ubuntu timeout;
+   retain the separate ordinary test and coverage steps.
+
+Acceptance: full tests, vet, lint, race matrix where configured, fuzz campaigns,
+and coverage pass from X: roots; no C: build/cache output is introduced.
+
+### Phase D — release preparation (only after all evidence is green)
+
+1. Bump the user-facing version consistently in `main.go`, its existing version
+   tests, and `CHANGELOG.md` to v1.0.4. Include only the validated validation
+   contract, coverage artifact, and boundary-test changes.
+2. Commit code/tests and CI changes as focused Conventional Commits. Do not add
+   standalone history-padding or test-less planning commits. The release bump
+   may be one atomic release commit after the preceding changes are green.
+3. Run the complete X: verifier, inspect artifact contents, and require green
+   native CI for the exact release commit. Check `git diff`, `git status`, module
+   dependency policy, gitleaks, govulncheck and actionlint.
+4. Only then create and push `v1.0.4` using the authorized `yv3000` account so
+   the existing release workflow publishes binaries. No Dockerfile, devcontainer,
+   service, endpoint or infrastructure file is part of this release.
+
+### Secondary-account and history boundaries
+
+The earlier disclosed trulyimmortal documentation PR is already merged. A future
+small PR is allowed only for a real isolated documentation or test issue, with
+same-maintainer and AI-assistance disclosure. It must not be used to simulate
+independent human diversity. Core validation, CI and release changes belong to
+yv3000. Commit cadence should follow coherent tested concerns, not one-line
+artificial history inflation.
+
+### Questions resolved before coding
+
+- No Docker or infrastructure work: rejected despite the evaluator suggestion.
+- No runtime dependency or parser rewrite: standard library and current pass-through
+  behavior remain the design.
+- No code, tag, release, issue or PR is being created in this planning step.
+- Version bump/tagging is planned because the user explicitly requested it, but
+  happens only after the implementation and exact-release CI evidence passes.
 
 ## Evidence from initial audit
 

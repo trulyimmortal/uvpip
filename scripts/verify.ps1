@@ -42,6 +42,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'go test failed' }
     $report = & go tool cover "-func=$coverage"
     if ($LASTEXITCODE -ne 0) { throw 'go tool cover failed' }
+    [IO.File]::WriteAllLines((Join-Path $artifacts 'coverage.txt'), [string[]]$report, (New-Object Text.UTF8Encoding($false)))
     $report | ForEach-Object { Write-Host $_ }
     $total = [regex]::Match(($report -join "`n"), '(?m)^total:\s+\(statements\)\s+([0-9]+(?:\.[0-9]+)?)%\s*$')
     if (-not $total.Success) { throw 'Missing total statement coverage' }

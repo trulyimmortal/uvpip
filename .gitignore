@@ -22,6 +22,7 @@ desktop.ini
 # Test cache
 *.test
 coverage.out
+coverage.txt
 
 # Local Python environments and generated dependencies
 /v1/
