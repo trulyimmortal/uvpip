@@ -17,6 +17,21 @@ func validateTranslationFlags(args []string) error {
 		case arg == "--verbose":
 			verbose = true
 		case strings.HasPrefix(arg, "-") && !strings.HasPrefix(arg, "--") && len(arg) > 1:
+			switch arg[1] {
+			case 'r', 'c', 'e', 'i', 'f', 't', 'b':
+				continue // Options with attached argument consume the remainder of the token.
+			}
+			isBundle := true
+			for i := 1; i < len(arg); i++ {
+				c := arg[i]
+				if (c < 'a' || c > 'z') && (c < 'A' || c > 'Z') {
+					isBundle = false
+					break
+				}
+			}
+			if !isBundle {
+				continue
+			}
 			for i := 1; i < len(arg); i++ {
 				switch arg[i] {
 				case 'q':

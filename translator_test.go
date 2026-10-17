@@ -33,6 +33,9 @@ func TestValidateTranslationFlags(t *testing.T) {
 		{"literal verbose", []string{"install", "-q", "--", "--verbose"}, false},
 		{"conflict before separator", []string{"install", "-q", "-v", "--"}, true},
 		{"option values and URL", []string{"install", "--index-url", "https://example.org/-q/-v", "--config-settings=--quiet", "pkg"}, false},
+		{"attached requirement option with q and v in filename", []string{"install", "-rrequirements-dev.txt"}, false},
+		{"attached constraint option with q and v in filename", []string{"install", "-cconstraints-quick-view.txt"}, false},
+		{"attached editable option with q and v in path", []string{"install", "-e./pkg-quick-view"}, false},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			err := validateTranslationFlags(tt.args)
